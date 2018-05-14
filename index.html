@@ -1,0 +1,209 @@
+<!doctype html>
+<html>
+	<head>
+		<link rel="icon" type="image/png" href="favicon.png">
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>Drupal 8 theming</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/black.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h1>Drupal 8 theming basics</h1>
+				</section>
+				<section>
+					<h2>Table of contents</h2>
+					<ul>
+						<li>How to define Drupal 8 theme</li>
+            <li>Responsive image module</li>
+						<li>Drupal 8 theme folder structure</li>
+						<li>Working with CSS and JS</li>
+						<li>Front-end build process</li>
+						<li>Templating with twig</li>
+						<li>PHP logic in Drupal 8 theme: preprocessing, altering, etc.</li>
+						<li>Best practices and examples</li>
+					</ul>
+				</section>
+				<section>
+					<h2>Define Drupal 8 theme</h2>
+					<p>file name: <code>ffw_theme.info.yml</code></p>
+					<img src="img/ffw_theme_info.png" alt="Drupal 8 info file">
+					<p>Drupal 8 documentation link
+						<a href="https://www.drupal.org/docs/8/theming-drupal-8/defining-a-theme-with-an-infoyml-file">https://www.drupal.org/docs/8/theming-drupal-8/defining-a-theme-with-an-infoyml-file</a>
+					</p>
+				</section>
+				<section>
+					<h3>Key/value pairs of .info.yml file</h3>
+					<ul>
+						<li>name <em>(required)</em></li>
+						<li>type <em>(required)</em></li>
+						<li>core <em>(required)</em></li>
+            <li>base theme <em>(not required)</em> default is core stable theme</li>
+					</ul>
+				</section>
+				<section>
+					<h3>Folder structure</h3>
+					<img width="250" src="img/drupal8themefolderstructure.png" alt="Drupal8 theme folder structure">
+				</section>
+				<section>
+					<h3>Working with CSS and JS, a.k.a assets</h3>
+					<h5>How to add an asset</h5>
+					<ol>
+						<li>Define an asset library and then</li>
+						<li>Include it in <code>.info.yml</code> file or</li>
+						<li>Attach it in a twig template with <code>attach_library()</code> function or</li>
+						<li>In a preprocess hook with the <code>[#attached]</code> key</li>
+					</ol>
+				</section>
+				<section>
+					<h2>Define an asset library</h2>
+          <p>file: <code>ffw_theme.libraries.yml</code></p>
+          <pre>
+            <code>
+            global-assets:
+              version: VERSION
+              css:
+                base:
+                  assets/css/base.css: {}
+              js:
+                assets/js/script.js: {}
+            </code>
+          </pre>
+          <p><a href="https://www.drupal.org/docs/8/theming-drupal-8/adding-stylesheets-css-and-javascript-js-to-a-drupal-8-theme#define">Documentation link</a></p>
+				</section>
+        <section>
+          <h2>Attaching library to all pages</h2>
+          <p>file: <code>ffw_theme.info.yml</code></p>
+          <pre>
+            <code>
+            libraries:
+              - ffw/global-assets
+
+            libraries-override:
+              system/base:
+                css:
+                  component:
+                    /core/themes/stable/css/system/components/item-list.module.css: false
+
+            libraries-extend
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h2>Attaching library in a twig template</h2>
+          <p>file: <code>node--article.html.twig</code></p>
+          <pre>
+            <code>
+              {{ attach_library('ffw_theme/slick') }}
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h2>Attach a library in a preprocess hook</h2>
+          <pre>
+            <code>
+              /**
+               * Implements hook_preprocess_HOOK().
+               */
+              function triflex_theme_preprocess_paragraph(&$variables) {
+                $paragraph_bundle = $variables['paragraph']->bundle();
+
+                switch ($paragraph_bundle) {
+                  case 'system_slider':
+                    $variables['#attached']['library'][] = 'triflex_theme/slick';
+                    $variables['#attached']['library'][] = 'triflex_theme/system-slider';
+                    break;
+                }
+              }
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h2>Front-end build automation process</h2>
+          <ul>
+            <li>Node JS and npm</li>
+            <li>Grunt or Gulp</li>
+            <li>npm scripts</li>
+            <li>BLT front-end hooks</li>
+            <li>Examples</li>
+          </ul>
+        </section>
+        <section>
+          <h2>Templating with twig</h2>
+          <p>Drupal 8 default template engine</p>
+          <p>Include a template:</p>
+          <pre><code>{% include '@ffw_theme/includes/footer.html.twig' %}</code></pre>
+          <p>Extend a template</p>
+          <pre><code>{% extends '@triflex_theme/content/node-base.html.twig' %}</code></pre>
+          <p>If you copy a template from a base theme: should block statements be included?</p>
+        </section>
+        <section>
+          <h2>PHP logic in the theme</h2>
+          <p>It goes in the file:</p>
+          <code>themename.theme</code>
+            <pre>
+              <code>
+              $path_to_ffw_theme = drupal_get_path('theme', 'ffw_theme');
+
+              include_once $path_to_ffw_theme . '/inc/helpers.inc';
+              include_once $path_to_ffw_theme . '/inc/alter.inc';
+              include_once $path_to_ffw_theme . '/inc/preprocess.inc';
+              include_once $path_to_ffw_theme . '/inc/theme.inc';
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h4>Add custom theme suggestions:</h4>
+          <pre><code>hook_theme_suggestions_HOOK(array $variables)</code></pre>
+          <p><a href="https://api.drupal.org/api/drupal/core%21lib%21Drupal%21Core%21Render%21theme.api.php/function/hook_theme_suggestions_HOOK/8.6.x">Drupal docs link</a></p>
+          <h4>Alter theme suggestions</h4>
+          <pre>
+          <code>hook_theme_suggestions_alter(array &$suggestions, array $variables, $hook)</code>
+          <code>hook_theme_suggestions_HOOK_alter(array &$suggestions, array $variables)</code>
+          </pre>
+          <p>Add suggestion in other alter hook.</p>
+        </section>
+        <section>
+          <h2>Best practices</h2>
+          <li>Reuse templates and CSS classes</li>
+          <li>One style.css file or multiple .css files</li>
+          <li>Performance? icon fonts or svg(inline, sprites, etc.)</li>
+        </section>
+			</div>
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>
